@@ -96,10 +96,15 @@ export const createProfile = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: "Passwords do not match" });
   }
 
-  if (checkID && checkID.password !== "" && checkID.password !== password) {
-    return res.status(400).json({ message: "Password is incorrect" });
+  // Check passwords match
+  if (password !== cPassword) {
+    return res.status(400).json({ message: "Passwords do not match" });
   }
-
+  if (checkID.password != null) {    
+    if (checkID.password != password ) {
+      return res.status(400).json({ message: "password wrong" });
+    }
+  }
   // Hash password before saving
   try {
     const profilePhoto = req.files?.profilePhoto?.[0]
