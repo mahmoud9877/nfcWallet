@@ -101,8 +101,6 @@ export const createProfile = asyncHandler(async (req, res) => {
   }
 
   // Hash password before saving
-  const hashedPassword = await bcrypt.hash(password, 10);
-
   try {
     const profilePhoto = req.files?.profilePhoto?.[0]
       ? await cloudinary.uploader.upload(req.files.profilePhoto[0].path, {
@@ -150,7 +148,7 @@ export const createProfile = asyncHandler(async (req, res) => {
         profilePhoto: profilePhoto?.secure_url || null,
         coverImage: coverImage?.secure_url || null,
         imageGallery: imageGallery.map((img) => img.secure_url) || [],
-        password: hashedPassword,
+        password,
       }
     );
 
