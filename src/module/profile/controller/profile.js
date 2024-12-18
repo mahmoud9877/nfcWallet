@@ -50,12 +50,16 @@ export const createWallet = asyncHandler(async (req, res, next) => {
 // Function to create a new user profile
 export const createProfile = asyncHandler(async (req, res) => {
   const { nfcID } = req.params;
-  if (nfcID) {
-    const checkID = await userModel.findById(nfcID);
-    if (!checkID) {
-      return res.status(404).json({ message: "NFC ID not found" });
-    }
+  
+  if (!nfcID) {
+    return res.status(400).json({ message: "NFC ID is required" });
   }
+  
+  const checkID = await userModel.findById(nfcID);
+  if (!checkID) {
+    return res.status(404).json({ message: "NFC ID not found" });
+  }
+
   let {
     userName,
     gmail,
@@ -79,25 +83,27 @@ export const createProfile = asyncHandler(async (req, res) => {
     password,
     cPassword,
   } = req.body;
-  // Check if email or phone already exists
+
   if (await userModel.findOne({ gmail })) {
     return res.status(400).json({ message: "Gmail is already taken" });
   }
+
   if (await userModel.findOne({ phone })) {
     return res.status(400).json({ message: "Phone is already taken" });
   }
-  // Check passwords match
+
   if (password !== cPassword) {
     return res.status(400).json({ message: "Passwords do not match" });
   }
-  if (checkID.password != "") {
-    if (checkID.password != password) {
-      return res.status(400).json({ message: "password wrong" });
-    }
+
+  if (checkID && checkID.password !== "" && checkID.password !== password) {
+    return res.status(400).json({ message: "Password is incorrect" });
   }
 
+  // Hash password before saving
+  const hashedPassword = await bcrypt.hash(password, 10);
+
   try {
-    // Upload images to Cloudinary
     const profilePhoto = req.files?.profilePhoto?.[0]
       ? await cloudinary.uploader.upload(req.files.profilePhoto[0].path, {
           folder: "profiles",
@@ -118,7 +124,7 @@ export const createProfile = asyncHandler(async (req, res) => {
         )
       : [];
 
-    // Save user to database
+    // Update user profile
     const profile = await userModel.updateOne(
       { _id: nfcID },
       {
@@ -144,12 +150,12 @@ export const createProfile = asyncHandler(async (req, res) => {
         profilePhoto: profilePhoto?.secure_url || null,
         coverImage: coverImage?.secure_url || null,
         imageGallery: imageGallery.map((img) => img.secure_url) || [],
-        password,
+        password: hashedPassword,
       }
     );
 
     res.status(200).json({
-      message: "done",
+      message: "Profile updated successfully",
       data: profile,
     });
   } catch (error) {
