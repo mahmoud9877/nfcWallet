@@ -158,7 +158,7 @@ export const createProfile = asyncHandler(async (req, res) => {
     );
 
     res.status(200).json({
-      message: "Profile updated successfully",
+      message: "done",
       data: profile,
     });
   } catch (error) {
